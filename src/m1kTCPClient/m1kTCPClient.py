@@ -165,6 +165,11 @@ class m1kTCPClient:
         self._query(f"sd {settling_delay}")
 
     @property
+    def enabled_outputs(self):
+        """Get dictionary of enabled state of channels."""
+        return ast.literal_eval(self._query(f"eos"))
+
+    @property
     def idn(self):
         """Get SMU id string."""
         return self._query("idn")
