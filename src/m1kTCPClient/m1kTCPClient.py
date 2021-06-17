@@ -192,7 +192,6 @@ class m1kTCPClient:
     def configure_channel_settings(
         self,
         channel=None,
-        auto_off=None,
         four_wire=None,
         v_range=None,
         default=False,
@@ -203,8 +202,6 @@ class m1kTCPClient:
         ----------
         channel : int
             Channel number (0-indexed). If `None`, apply settings to all channels.
-        auto_off : bool
-            Automatically set output to high impedance mode after a measurement.
         four_wire : bool
             Four wire enabled.
         v_range : {2.5, 5}
@@ -213,9 +210,6 @@ class m1kTCPClient:
         default : bool
             Reset all settings to default.
         """
-        if auto_off is not None:
-            self._query(f"ao {int(auto_off)} {str(channel)}")
-
         if four_wire is not None:
             self._query(f"fw {int(four_wire)} {str(channel)}")
 
