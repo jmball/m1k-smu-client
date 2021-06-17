@@ -86,7 +86,7 @@ class m1kTCPClient:
                 if buf.endswith(self.TERMCHAR_BYTES):
                     break
 
-            resp = buf.decode().strip(TERMCHAR)
+            resp = buf.decode().strip(self.TERMCHAR)
 
             if resp.startswith("ERROR"):
                 raise RuntimeError(resp)
@@ -100,32 +100,32 @@ class m1kTCPClient:
     @property
     def plf(self):
         """Get the power line frequency in Hz."""
-        return self._query("plf")
+        return float(self._query("plf"))
 
     @property
     def ch_per_board(self):
         """Get the number of channels per board in use."""
-        return self._query("cpb")
+        return int(self._query("cpb"))
 
     @property
     def maximum_buffer_size(self):
         """Maximum number of samples in write/run/read buffers."""
-        return self._query("buf")
+        return int(self._query("buf"))
 
     @property
     def num_channels(self):
         """Get the number of connected SMU channels."""
-        return self._query("chs")
+        return int(self._query("chs"))
 
     @property
     def num_boards(self):
         """Get the number of connected SMU boards."""
-        return self._query("bds")
+        return int(self._query("bds"))
 
     @property
     def sample_rate(self):
         """Get the raw sample rate for each device."""
-        return self._query("sr")
+        return int(self._query("sr"))
 
     @property
     def channel_settings(self):
@@ -135,7 +135,7 @@ class m1kTCPClient:
     @property
     def nplc(self):
         """Integration time in number of power line cycles."""
-        return self._query("nplc")
+        return float(self._query("nplc"))
 
     @nplc.setter
     def nplc(self, nplc):
@@ -151,7 +151,7 @@ class m1kTCPClient:
     @property
     def settling_delay(self):
         """Settling delay in seconds."""
-        return self._query("sd")
+        return float(self._query("sd"))
 
     @settling_delay.setter
     def settling_delay(self, settling_delay):
@@ -290,7 +290,7 @@ class m1kTCPClient:
         data : dict
             Data dictionary of the form: {channel: data}.
         """
-        return dict(
+        return ast.literal_eval(
             self._query(
                 f"meas {str(channels).replace(' ', '')} {measurement} "
                 + f"{int(allow_chunking)}"
