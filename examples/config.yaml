@@ -1,0 +1,11 @@
+smu:
+  # ip address
+  address: '192.168.0.26'
+  # tcp port
+  port: 2101
+  # comms termination character
+  terminator: '\n'
+  # power line frequency in Hx
+  plf: 50
+  # measure in two wire mode. If False, measure in four wire mode.
+  two_wire: True
