@@ -349,7 +349,7 @@ class m1kTCPClient:
 
 if __name__ == "__main__":
     HOST = "127.0.0.1"
-    PORT = 2101
+    PORT = 20101
     TERMCHAR = "\n"
 
     with m1kTCPClient(HOST, PORT, TERMCHAR) as smu:
