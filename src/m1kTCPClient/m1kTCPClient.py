@@ -168,6 +168,27 @@ class m1kTCPClient:
         """Get SMU id string."""
         return self._query("idn")
 
+    @property
+    def channel_mapping(self):
+        """Get channel mapping dictionary."""
+        return self._query("chm")
+
+    @property
+    def channels_inverted(self):
+        """Get state on channel mapping reversal."""
+        return self._query("inv")
+
+    def invert_channels(self, inverted=False):
+        """Invert the channel mapping.
+
+        Parameters
+        ----------
+        inverted : bool
+            Inverted state of the channel mapping. If an inverted state is supplied
+            that matches the current inverted state, this method has no effect.
+        """
+        self._query(f"inv {int(inverted)}")
+
     def use_external_calibration(self, channel=None):
         """Use calibration externally to the devices.
 
