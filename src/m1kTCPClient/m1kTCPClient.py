@@ -79,19 +79,13 @@ class m1kTCPClient:
             s.connect((self.HOST, self.PORT))
 
             s.sendall(msg.encode() + self.TERMCHAR_BYTES)
+            with s.makefile('r', newline=self.TERMCHAR) as sf:
+                resp = sf.readline().rstrip(self.TERMCHAR)
 
-            buf = b""
-            while True:
-                buf += s.recv(1)
-                if buf.endswith(self.TERMCHAR_BYTES):
-                    break
-
-            resp = buf.decode().strip(self.TERMCHAR)
-
-            if resp.startswith("ERROR"):
-                raise RuntimeError(resp)
-            else:
-                return resp
+        if resp.startswith("ERROR"):
+            raise RuntimeError(resp)
+        else:
+            return resp
 
     def reset(self):
         """Reset SMU paramters to default."""
@@ -295,12 +289,12 @@ class m1kTCPClient:
         data : dict
             Data dictionary of the form: {channel: data}.
         """
-        return ast.literal_eval(
-            self._query(
-                f"meas {str(channels).replace(' ', '')} {measurement} "
-                + f"{int(allow_chunking)}"
-            )
-        )
+        answer = self._query(f"meas {str(channels).replace(' ', '')} {measurement} " + f"{int(allow_chunking)}")
+        if len(answer) > 0:
+            rslt = ast.literal_eval(answer)
+        else:  # handle the case where the settings crash the server
+            rslt = None
+        return rslt
 
     def enable_output(self, enable, channels=None):
         """Enable/disable channel outputs.
@@ -349,7 +343,7 @@ class m1kTCPClient:
 
 if __name__ == "__main__":
     HOST = "127.0.0.1"
-    PORT = 2101
+    PORT = 20101
     TERMCHAR = "\n"
 
     with m1kTCPClient(HOST, PORT, TERMCHAR) as smu:
