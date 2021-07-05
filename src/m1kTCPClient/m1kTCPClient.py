@@ -2,12 +2,16 @@
 
 import ast
 import socket
+import time
+import warnings
 
 
 class m1kTCPClient:
     """TCP client to TCP server for SMU."""
 
-    def __init__(self, HOST, PORT, TERMCHAR="\n", timeout=30, plf=50):
+    def __init__(
+        self, HOST, PORT, TERMCHAR="\n", timeout=30, retries=3, retry_delay=5, plf=50
+    ):
         """Construct TCP client for SMU.
 
         Parameters
@@ -18,18 +22,22 @@ class m1kTCPClient:
             Server port.
         TERMCHAR : str
             Message termination character string.
+        timeout : float
+            TCP timeout in seconds.
+        retries : int
+            Number of times to retry a query if comms errors occur.
+        retry_delay : float
+            Time in seconds to wait between retries.
         plf : float or int
             Power line frequency (Hz).
-        ch_per_board : {1, 2}
-            Number of channels to use per ADALM1000 board. If 1, channel A is assumed
-            as the channel to use. This cannot be changed once the object has been
-            instantiated.
         """
         self.HOST = HOST
         self.PORT = PORT
         self._TERMCHAR = TERMCHAR
         self._TERMCHAR_BYTES = TERMCHAR.encode()
         self.timeout = timeout
+        self.retries = retries
+        self.retry_delay = retry_delay
 
         self._query(f"plf {plf}")
 
@@ -73,19 +81,43 @@ class m1kTCPClient:
         resp : str
             Instrument response.
         """
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(self.timeout)
+        err = None
+        for attempt in range(1, self.retries + 1):
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.settimeout(self.timeout)
 
-            s.connect((self.HOST, self.PORT))
+                    s.connect((self.HOST, self.PORT))
 
-            s.sendall(msg.encode() + self.TERMCHAR_BYTES)
-            with s.makefile('r', newline=self.TERMCHAR) as sf:
-                resp = sf.readline().rstrip(self.TERMCHAR)
+                    s.sendall(msg.encode() + self.TERMCHAR_BYTES)
+                    with s.makefile("r", newline=self.TERMCHAR) as sf:
+                        resp = sf.readline().rstrip(self.TERMCHAR)
 
-        if resp.startswith("ERROR"):
-            raise RuntimeError(resp)
-        else:
-            return resp
+                if resp.startswith("ERROR"):
+                    raise RuntimeError(resp)
+                else:
+                    return resp
+            except ConnectionRefusedError as e:
+                if attempt == self.retries:
+                    err = e
+                else:
+                    warnings.warn(
+                        "`ConnectionRefusedError` occurred. The server is probably "
+                        + "down. Attempting to retry."
+                    )
+            except socket.timeout as e:
+                if attempt == self.retries:
+                    err = e
+                else:
+                    warnings.warn(
+                        "`socket.timeout` occurred. The server is probably down. "
+                        + "Attempting to retry."
+                    )
+
+            time.sleep(self.retry_delay)
+
+        if err is not None:
+            raise err
 
     def reset(self):
         """Reset SMU paramters to default."""
@@ -310,7 +342,10 @@ class m1kTCPClient:
         data : dict
             Data dictionary of the form: {channel: data}.
         """
-        answer = self._query(f"meas {str(channels).replace(' ', '')} {measurement} " + f"{int(allow_chunking)}")
+        answer = self._query(
+            f"meas {str(channels).replace(' ', '')} {measurement} "
+            + f"{int(allow_chunking)}"
+        )
         if len(answer) > 0:
             rslt = ast.literal_eval(answer)
         else:  # handle the case where the settings crash the server
