@@ -98,21 +98,19 @@ class m1kTCPClient:
                 else:
                     return resp
             except ConnectionRefusedError as e:
-                if attempt == self.retries:
-                    err = e
-                else:
-                    warnings.warn(
-                        "`ConnectionRefusedError` occurred. The server is probably "
-                        + "down. Attempting to retry."
-                    )
+                _err = e
+            except ConnectionResetError as e:
+                _err = e
             except socket.timeout as e:
-                if attempt == self.retries:
-                    err = e
-                else:
-                    warnings.warn(
-                        "`socket.timeout` occurred. The server is probably down. "
-                        + "Attempting to retry."
-                    )
+                _err = e
+
+            if attempt == self.retries:
+                err = _err
+            else:
+                warnings.warn(
+                    f"{type(_err).__name__} occurred. The server is probably down. "
+                    + "Attempting to retry."
+                )
 
             time.sleep(self.retry_delay)
 
