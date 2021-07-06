@@ -193,7 +193,7 @@ class m1kTCPClient:
     @property
     def enabled_outputs(self):
         """Get dictionary of enabled state of channels."""
-        return ast.literal_eval(self._query(f"eos"))
+        return ast.literal_eval(self._query("eos"))
 
     @property
     def idn(self):
@@ -209,6 +209,11 @@ class m1kTCPClient:
     def channels_inverted(self):
         """Get state on channel mapping reversal."""
         return self._query("inv")
+
+    @property
+    def _reset_cache(self):
+        """Get reset cache."""
+        return ast.literal_eval(self._query("rstc"))
 
     def invert_channels(self, inverted=False):
         """Invert the channel mapping.
