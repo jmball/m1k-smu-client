@@ -79,7 +79,7 @@ class m1kTCPClient:
             s.connect((self.HOST, self.PORT))
 
             s.sendall(msg.encode() + self.TERMCHAR_BYTES)
-            with s.makefile('r', newline=self.TERMCHAR) as sf:
+            with s.makefile("r", newline=self.TERMCHAR) as sf:
                 resp = sf.readline().rstrip(self.TERMCHAR)
 
         if resp.startswith("ERROR"):
@@ -310,7 +310,10 @@ class m1kTCPClient:
         data : dict
             Data dictionary of the form: {channel: data}.
         """
-        answer = self._query(f"meas {str(channels).replace(' ', '')} {measurement} " + f"{int(allow_chunking)}")
+        answer = self._query(
+            f"meas {str(channels).replace(' ', '')} {measurement} "
+            + f"{int(allow_chunking)}"
+        )
         if len(answer) > 0:
             rslt = ast.literal_eval(answer)
         else:  # handle the case where the settings crash the server
@@ -360,6 +363,30 @@ class m1kTCPClient:
             Turn on (True) or off (False) the blue LED.
         """
         self._query(f"led {int(R)} {int(G)} {int(B)} {str(channel)}")
+
+    def _low_level_voltage_sweep(self, start, stop, points):
+        """Perform a voltage sweep and return full buffer.
+
+        Parameters
+        ----------
+        start : float
+            Start voltage in V.
+        stop : float
+            Stop voltage in V.
+        points : int
+            Number of points in sweep.
+
+        Returns
+        -------
+        raw_data : dict
+            Raw data dictionary containing full data buffers.
+        """
+        answer = self._query(f"llvs {start} {stop} {points}")
+        if len(answer) > 0:
+            rslt = ast.literal_eval(answer)
+        else:  # handle the case where the settings crash the server
+            rslt = None
+        return rslt
 
 
 if __name__ == "__main__":
