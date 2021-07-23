@@ -304,6 +304,7 @@ class m1kTCPClient:
         source_mode : str
             Desired source mode during measurement: "v" for voltage, "i" for current.
         """
+        print(values)
         # strip whitespace from dict, server uses spaces as separator for params in msg
         self._query(f"lst {str(values).replace(' ', '')} {source_mode}")
 
